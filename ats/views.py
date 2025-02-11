@@ -5,10 +5,14 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Q
 
+
 class CandidateViewSet(viewsets.ModelViewSet):
     queryset = Candidate.objects.all()
     serializer_class = CandidateSerializer
+    
+    """Using ModelViewset which gives all the basic functionalities of GET POST PATCH PUT and DELETE"""
 
+    ## Creating API for Search
     @action(detail=False, methods=['get'], url_path='search')
     def search(self, request):
         keyword = request.query_params.get('query', None)
