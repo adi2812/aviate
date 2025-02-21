@@ -3,7 +3,7 @@ from .models import Candidate
 from .serializers import CandidateSerializer
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.db.models import Q
+from django.db.models import Q, Case, When, Value, IntegerField
 
 
 class CandidateViewSet(viewsets.ModelViewSet):
@@ -18,9 +18,12 @@ class CandidateViewSet(viewsets.ModelViewSet):
         keyword = request.query_params.get('query', None)
         q = Q()
         if keyword and type(keyword) == str:
+            relevancy_expression = Value(0, output_field=IntegerField())
             for k in keyword.split(" "):
                 q |= Q(name__icontains=k)
-            candidates = Candidate.objects.filter(q)
+                relevancy_expression += Case(When(name__icontains=k, then=Value(1)),default=Value(0),output_field=IntegerField())
+            candidates = Candidate.objects.filter(q).annotate(relevancy=relevancy_expression).order_by('-relevancy')
+            print(candidates.values("name","relevancy"))
         else:
             candidates = Candidate.objects.all()
         serializer = CandidateSerializer(candidates, many=True)
